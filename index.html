@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Nerva | Futuristic Dev Collective - Énergie Dynamique</title>
+    <!-- Google Fonts & Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Three.js -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js"
+            }
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: #0a0a0f;
+            color: #ffffff;
+            overflow-x: hidden;
+            transition: background 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1), color 0.3s ease;
+        }
+
+        /* ========== SYSTÈME DE THÈMES : SOMBRE, CLAIR, DÉGRADÉ ========== */
+        body.light-mode {
+            background: #f5f7fe;
+            color: #1a1a2e;
+        }
+        
+        body.gradient-mode {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #ffffff;
+        }
+        
+        body.gradient-mode.light-mode {
+            background: linear-gradient(135deg, #f5f7fe, #e0e7ff, #d8e6f5);
+            color: #1a1a2e;
+        }
+
+        body.light-mode .navbar {
+            background: rgba(245, 247, 254, 0.92);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(100, 108, 255, 0.3);
+        }
+        
+        body.gradient-mode .navbar {
+            background: rgba(15, 12, 41, 0.7);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+        }
+        
+        body.gradient-mode.light-mode .navbar {
+            background: rgba(224, 231, 255, 0.85);
+            border-bottom: 1px solid rgba(100, 108, 255, 0.4);
+        }
+
+        body.light-mode .nav-links a { color: #1a1a2e; }
+        body.gradient-mode .nav-links a { color: #ffffff; text-shadow: 0 0 5px rgba(0,212,255,0.3); }
+        
+        body.light-mode .skill-card, body.light-mode .team-member, body.light-mode .project-card,
+        body.light-mode .realisation-item, body.light-mode .contact-container, body.light-mode .product-card {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.05);
+            border-color: rgba(100, 108, 255, 0.25);
+        }
+        
+        body.gradient-mode .skill-card, body.gradient-mode .team-member, body.gradient-mode .project-card,
+        body.gradient-mode .realisation-item, body.gradient-mode .contact-container, body.gradient-mode .product-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(16px);
+            border-color: rgba(0, 212, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        
+        body.gradient-mode.light-mode .skill-card, body.gradient-mode.light-mode .team-member,
+        body.gradient-mode.light-mode .project-card, body.gradient-mode.light-mode .realisation-item,
+        body.gradient-mode.light-mode .contact-container, body.gradient-mode.light-mode .product-card {
+            background: rgba(255, 255, 255, 0.75);
+            border-color: rgba(100, 108, 255, 0.4);
+        }
+        
+        body.light-mode .hero-badge { background: rgba(100, 108, 255, 0.12); border-color: #a5b4fc; color: #5c6bc0; }
+        body.gradient-mode .hero-badge { background: rgba(0, 212, 255, 0.2); border-color: #00d4ff; color: #00d4ff; }
+
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            transition: opacity 0.7s ease;
+        }
+        body.light-mode #bg-canvas { opacity: 0.45; filter: brightness(0.96) saturate(0.85); }
+        body.gradient-mode #bg-canvas { opacity: 0.6; filter: brightness(1.1) saturate(1.2); }
+
+        .content { position: relative; z-index: 2; }
+
+        /* Navigation améliorée */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.9rem 2rem;
+            backdrop-filter: blur(18px);
+            background: rgba(5, 5, 15, 0.7);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.25);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+        .logo-img { height: 48px; cursor: pointer; border-radius: 12px; transition: transform 0.25s, filter 0.3s; }
+        .logo-img:hover { transform: scale(1.05) rotate(-2deg); filter: drop-shadow(0 0 12px #00d4ff); }
+        .nav-links { display: flex; gap: 2rem; list-style: none; align-items: center; }
+        .nav-links a { text-decoration: none; font-weight: 500; transition: 0.25s; position: relative; }
+        .nav-links a::before { content: ''; position: absolute; bottom: -6px; left: 0; width: 0; height: 2px; background: linear-gradient(90deg, #00d4ff, #ff00d4); transition: width 0.3s; }
+        .nav-links a:hover::before { width: 100%; }
+        .nav-links a:hover { color: #00d4ff; text-shadow: 0 0 8px #00d4ff; }
+
+        /* Nouveau sélecteur de thème amélioré */
+        .theme-selector {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(0, 212, 255, 0.15);
+            border-radius: 60px;
+            padding: 0.25rem;
+            border: 1px solid rgba(0, 212, 255, 0.4);
+        }
+        .theme-btn {
+            background: transparent;
+            border: none;
+            padding: 0.4rem 0.9rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            color: inherit;
+            font-weight: 500;
+        }
+        .theme-btn.active {
+            background: linear-gradient(135deg, #00d4ff, #ff00d4);
+            color: white;
+            box-shadow: 0 0 15px rgba(0,212,255,0.5);
+        }
+        .theme-btn:hover:not(.active) {
+            background: rgba(0,212,255,0.3);
+            transform: scale(1.05);
+        }
+        
+        .menu-toggle { display: none; flex-direction: column; cursor: pointer; gap: 5px; z-index: 101; }
+        .menu-toggle span { width: 28px; height: 2.5px; background: linear-gradient(135deg, #00d4ff, #ff00d4); transition: 0.25s; border-radius: 4px; }
+        .container { max-width: 1300px; margin: 0 auto; padding: 0 1.8rem; }
+
+        /* Animations améliorées */
+        .float-element {
+            animation: floatSoft 4s ease-in-out infinite;
+        }
+        @keyframes floatSoft {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* HERO section avec animation d'explosion d'entrée */
+        .hero {
+            min-height: 92vh;
+            display: flex;
+            align-items: center;
+            padding: 2rem 0 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-animate {
+            animation: heroExplosionReveal 0.9s cubic-bezier(0.2, 0.9, 0.4, 1.2) forwards;
+        }
+        @keyframes heroExplosionReveal {
+            0% { opacity: 0; transform: scale(0.7) rotate(-5deg); filter: blur(12px); }
+            40% { opacity: 1; transform: scale(1.08) rotate(1deg); filter: blur(0); }
+            100% { opacity: 1; transform: scale(1) rotate(0); filter: blur(0); }
+        }
+        .hero-badge { display: inline-block; background: rgba(0, 212, 255, 0.12); padding: 0.5rem 1.6rem; border-radius: 60px; margin-bottom: 1.5rem; border: 1px solid rgba(0, 212, 255, 0.5); animation: borderPulse 2.2s infinite, floatSoft 3s infinite; }
+        .hero h1 { font-size: clamp(2.2rem, 9vw, 5rem); font-weight: 800; background: linear-gradient(135deg, #ffffff, #00d4ff, #ff00d4); -webkit-background-clip: text; background-clip: text; color: transparent; animation: textGlow 3s infinite alternate; }
+        @keyframes textGlow {
+            0% { text-shadow: 0 0 0px rgba(0,212,255,0); }
+            100% { text-shadow: 0 0 20px rgba(0,212,255,0.6); }
+        }
+        .hero p { font-size: clamp(1rem, 4vw, 1.35rem); color: #c0c0f0; max-width: 700px; margin: 1rem auto 2rem; }
+        .btn-group { display: flex; gap: 1.2rem; justify-content: center; flex-wrap: wrap; }
+        .btn-primary, .btn-outline { padding: 0.9rem 2rem; border-radius: 60px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.7rem; text-decoration: none; transition: 0.3s; position: relative; overflow: hidden; z-index: 1; }
+        .btn-primary { background: linear-gradient(135deg, #00d4ff, #ff00d4); color: white; box-shadow: 0 6px 18px rgba(0, 212, 255, 0.3); }
+        .btn-primary::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); transition: left 0.5s; z-index: -1; }
+        .btn-primary:hover::before { left: 100%; }
+        .btn-primary:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 15px 30px rgba(0,212,255,0.5); }
+        .btn-outline { background: transparent; border: 2px solid #00d4ff; color: #00d4ff; }
+        .btn-outline:hover { transform: translateY(-4px); background: rgba(0,212,255,0.1); box-shadow: 0 0 20px rgba(0,212,255,0.4); }
+
+        /* Sections communes */
+        section { padding: 5rem 0; position: relative; overflow: hidden; }
+        .section-title { font-size: clamp(2rem, 7vw, 3rem); font-weight: 700; text-align: center; background: linear-gradient(135deg, #00d4ff, #ff00d4); -webkit-background-clip: text; background-clip: text; color: transparent; display: table; margin: 0 auto 1rem; }
+        .section-title::after { content: ''; display: block; width: 65px; height: 3px; background: linear-gradient(90deg, #00d4ff, #ff00d4); margin: 12px auto 0; border-radius: 4px; transition: width 0.4s; }
+        section:hover .section-title::after { width: 120px; }
+        .section-sub { text-align: center; color: #b0b0dd; margin-bottom: 3rem; }
+
+        /* ANIMATIONS DÉFILEMENT + EXPLOSION + FLOTTEMENT */
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.2);
+        }
+        .scroll-reveal.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .explode-reveal {
+            opacity: 0;
+            transform: scale(0.3) rotate(-10deg);
+            transition: all 0.7s cubic-bezier(0.34, 1.2, 0.64, 1);
+        }
+        .explode-reveal.revealed {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+        }
+
+        /* Grilles génériques */
+        .skills-grid, .team-grid, .projects-grid, .shop-grid, .realisations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+            gap: 2rem;
+        }
+
+        .skill-card, .team-member, .project-card, .product-card, .realisation-item {
+            background: rgba(20, 20, 40, 0.65);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            padding: 2rem 1.5rem;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .skill-card::before, .team-member::before, .project-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0,212,255,0.1), transparent);
+            transition: transform 0.5s;
+            transform: scale(0);
+            border-radius: 50%;
+            z-index: 0;
+        }
+        .skill-card:hover::before, .team-member:hover::before, .project-card:hover::before { transform: scale(1); }
+        .skill-card:hover, .team-member:hover, .project-card:hover, .product-card:hover, .realisation-item:hover { transform: translateY(-12px) scale(1.02); border-color: #00d4ff; box-shadow: 0 20px 40px rgba(0, 212, 255, 0.3); }
+        .skill-icon { font-size: 3rem; background: linear-gradient(135deg, #00d4ff, #ff00d4); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 1rem; transition: transform 0.3s; display: inline-block; }
+        .skill-card:hover .skill-icon { transform: rotateY(180deg); }
+        .avatar { width: 120px; height: 120px; margin: 0 auto 1rem; border-radius: 50%; overflow: hidden; border: 2px solid #00d4ff; transition: all 0.4s; }
+        .team-member:hover .avatar { transform: scale(1.08); border-color: #ff00d4; box-shadow: 0 0 25px #ff00d4; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+        .member-role { font-size: 0.85rem; color: #00d4ff; margin-top: 0.6rem; }
+        .product-image { width: 100%; height: 180px; border-radius: 20px; overflow: hidden; margin-bottom: 1rem; background: #0a0a1a; position: relative; }
+        .product-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+        .product-card:hover .product-image img { transform: scale(1.1); }
+        .product-price { color: #00d4ff; font-weight: 700; font-size: 1.3rem; margin: 0.7rem 0; }
+        .btn-whatsapp { background: #25D366; border: none; padding: 0.7rem 1.3rem; border-radius: 50px; color: white; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 0.8rem; transition: 0.3s; }
+        .btn-whatsapp:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(37,211,102,0.5); }
+        .realisation-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+        .realisation-icon { font-size: 2rem; background: linear-gradient(135deg, #00d4ff, #ff00d4); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .tech-badge { background: rgba(0, 212, 255, 0.18); padding: 0.25rem 0.8rem; border-radius: 30px; font-size: 0.7rem; font-weight: 500; display: inline-block; margin: 0.2rem; transition: 0.2s; }
+        .tech-badge:hover { background: #00d4ff; color: #0a0a0f; transform: scale(1.05); }
+        .contact-container { display: flex; flex-wrap: wrap; gap: 2.5rem; background: rgba(10, 10, 20, 0.7); backdrop-filter: blur(18px); border-radius: 40px; padding: 2.5rem; border: 1px solid rgba(0, 212, 255, 0.3); transition: all 0.4s; }
+        .contact-container:hover { border-color: #00d4ff; box-shadow: 0 20px 40px rgba(0,212,255,0.2); transform: translateY(-5px); }
+        .contact-form { flex: 1.5; display: flex; flex-direction: column; gap: 1rem; }
+        .contact-form input, .contact-form textarea { background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(0, 212, 255, 0.4); padding: 1rem; border-radius: 24px; color: white; font-family: inherit; transition: 0.3s; }
+        .contact-form input:focus, .contact-form textarea:focus { border-color: #ff00d4; outline: none; box-shadow: 0 0 15px rgba(255,0,212,0.3); transform: scale(1.01); }
+        .footer { text-align: center; padding: 2.5rem 1rem; border-top: 1px solid rgba(0, 212, 255, 0.2); }
+        .social-links a { color: #00d4ff; font-size: 1.5rem; margin: 0 0.8rem; display: inline-block; transition: 0.3s; }
+        .social-links a:hover { transform: translateY(-6px) scale(1.2); color: #ff00d4; text-shadow: 0 0 12px #ff00d4; }
+        
+        .hero-particle {
+            position: absolute;
+            background: radial-gradient(circle, #00d4ff, #ff00d4);
+            border-radius: 50%;
+            opacity: 0;
+            animation: floatParticleExplosion 8s infinite;
+            pointer-events: none;
+        }
+        @keyframes floatParticleExplosion {
+            0% { opacity: 0; transform: translateY(100vh) scale(0) rotate(0deg); }
+            20% { opacity: 0.8; transform: translateY(70vh) scale(1) rotate(180deg); }
+            80% { opacity: 0.5; transform: translateY(20vh) scale(1.2) rotate(360deg); }
+            100% { opacity: 0; transform: translateY(-50px) scale(0.8) rotate(540deg); }
+        }
+        
+        .floating-orb {
+            position: fixed;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(0,212,255,0.2), rgba(255,0,212,0.1));
+            border-radius: 50%;
+            filter: blur(40px);
+            pointer-events: none;
+            z-index: 1;
+            transition: transform 0.1s ease-out;
+        }
+
+        .mobile-scroll-glow {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,212,255,0.8) 0%, rgba(255,0,212,0.4) 50%, transparent 70%);
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.2s ease, transform 0.05s linear;
+            opacity: 0;
+            filter: blur(8px);
+            box-shadow: 0 0 30px rgba(0,212,255,0.8);
+            will-change: transform;
+        }
+        
+        .mobile-scroll-glow.active {
+            opacity: 1;
+            animation: pulseGlow 0.8s ease-in-out infinite alternate;
+        }
+        
+        @keyframes pulseGlow {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.6; }
+            100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+        }
+        
+        @media (min-width: 769px) {
+            .mobile-scroll-glow { display: none; }
+        }
+        
+        @keyframes borderPulse { 0%, 100% { box-shadow: 0 0 0px rgba(0, 212, 255, 0.2); } 50% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.8); } }
+        
+        @media (max-width: 860px) {
+            .navbar { padding: 0.8rem 1.2rem; }
+            .menu-toggle { display: flex; }
+            .nav-links { position: fixed; top: 0; right: -100%; height: 100vh; width: 75%; max-width: 300px; background: rgba(5, 5, 20, 0.97); backdrop-filter: blur(30px); flex-direction: column; justify-content: center; gap: 2rem; transition: right 0.3s ease-out; z-index: 99; border-left: 2px solid #00d4ff; }
+            body.light-mode .nav-links { background: rgba(245, 247, 254, 0.98); }
+            body.gradient-mode .nav-links { background: rgba(15, 12, 41, 0.95); }
+            .nav-links.active { right: 0; }
+            .container { padding: 0 1.2rem; }
+            section { padding: 3.5rem 0; }
+            .avatar { width: 100px; height: 100px; }
+            .mobile-scroll-glow { width: 80px; height: 80px; }
+            .theme-selector { gap: 0.3rem; }
+            .theme-btn { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+    <div class="floating-orb" id="floatingOrb"></div>
+    <div class="mobile-scroll-glow" id="mobileGlow"></div>
+    <div class="content">
+        <nav class="navbar">
+            <img src="https://placehold.co/150x50/0a0a0f/00d4ff?text=Nerva" alt="Nerva Logo" class="logo-img">
+            <div class="menu-toggle" id="mobile-menu"><span></span><span></span><span></span></div>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="#accueil">ACCUEIL</a></li><li><a href="#competences">COMPÉTENCES</a></li><li><a href="#equipe">ÉQUIPE</a></li>
+                <li><a href="#projets">PROJETS</a></li><li><a href="boutique.html">BOUTIQUE</a></li><li><a href="#contact">CONTACT</a></li>
+                <li><div class="theme-selector" id="theme-selector">
+                    <button class="theme-btn" data-theme="dark">🌙 Sombre</button>
+                    <button class="theme-btn" data-theme="light">☀️ Clair</button>
+                    <button class="theme-btn" data-theme="gradient">🎨 Dégradé</button>
+                </div></li>
+            </ul>
+        </nav>
+        <main>
+            <section id="accueil" class="hero">
+                <div id="heroParticles"></div>
+                <div class="container">
+                    <div class="hero-content hero-animate">
+                        <div class="hero-badge"><i class="fas fa-brain"></i> AI-Powered Dev Collective</div>
+                        <h1>Le futur du développement <br>est entre nos mains</h1>
+                        <p>Nerva fusionne créativité, IA et technologies de pointe.</p>
+                        <div class="btn-group">
+                            <a href="#contact" class="btn-primary"><i class="fas fa-rocket"></i> Lancer un projet</a>
+                            <a href="#boutique" class="btn-outline"><i class="fas fa-store"></i> Boutique Digital</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="competences" class="scroll-reveal">
+                <div class="container">
+                    <h2 class="section-title">EXÉCUTION SUR-MESURE</h2>
+                    <p class="section-sub">Des technologies maîtrisées pour des solutions disruptives</p>
+                    <div class="skills-grid skills-grid-target explode-reveal">
+                        <div class="skill-card"><div class="skill-icon"><i class="fab fa-html5"></i></div><h3>HTML / CSS / JS</h3><p>Animations fluides, designs responsives.</p></div>
+                        <div class="skill-card"><div class="skill-icon"><i class="fab fa-python"></i></div><h3>Python</h3><p>Backend robuste, data science, IA.</p></div>
+                        <div class="skill-card"><div class="skill-icon"><i class="fas fa-microchip"></i></div><h3>C / C++ / C#</h3><p>Hautes performances, jeux, embarqué.</p></div>
+                        <div class="skill-card"><div class="skill-icon"><i class="fas fa-cloud-upload-alt"></i></div><h3>Cloud & DevOps</h3><p>CI/CD, Docker, orchestration.</p></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="equipe" class="scroll-reveal">
+                <div class="container">
+                    <h2 class="section-title">CYBER-TALENTS</h2>
+                    <p class="section-sub">Des esprits brillants, unis par la passion</p>
+                    <div class="team-grid team-grid-target explode-reveal">
+                        <div class="team-member"><div class="avatar"><img src="./image/talla.jpg" alt="Mourtala"></div><h3>Mourtala Gueye</h3><div class="member-role"><i class="fas fa-mobile-alt"></i> Étudiant IDA</div></div>
+                        <div class="team-member"><div class="avatar"><img src="./image/diop.jpg" alt="Mamadou"></div><h3>Mamadou Diop</h3><div class="member-role"><i class="fas fa-gem"></i> Étudiant IDA</div></div>
+                        <div class="team-member"><div class="avatar"><img src="./image/sei.jpg" alt="Seidou"></div><h3>Seidou Mangane</h3><div class="member-role"><i class="fas fa-shield-alt"></i> Étudiant IDA</div></div>
+                        <div class="team-member"><div class="avatar"><img src="./image/laye.jpg" alt="Abdoulahi"></div><h3>Abdoulahi Sall</h3><div class="member-role"><i class="fas fa-chart-line"></i> Étudiant MAI</div></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="projets" class="scroll-reveal">
+                <div class="container">
+                    <h2 class="section-title">NOS SOLUTIONS</h2>
+                    <p class="section-sub">Des réalisations concrètes</p>
+                    <div class="projects-grid projects-grid-target explode-reveal">
+                        <div class="project-card"><i class="fas fa-mobile-alt" style="font-size:2.5rem;color:#00d4ff;"></i><h3>Applications Mobile</h3><p>iOS & Android natifs, React Native.</p></div>
+                        <div class="project-card"><i class="fas fa-globe" style="font-size:2.5rem;color:#ff00d4;"></i><h3>Sites & Web Apps</h3><p>SPA, PWA, e-commerce ultra-rapides.</p></div>
+                        <div class="project-card"><i class="fas fa-shield-haltered" style="font-size:2.5rem;color:#00ffaa;"></i><h3>Sécurité des Données</h3><p>Chiffrement, audits RGPD.</p></div>
+                    </div>
+                    <div style="margin-top: 5rem;">
+                        <h2 class="section-title">PROJETS DÉJÀ RÉALISÉS</h2>
+                        <p class="section-sub">Découvrez nos créations mobiles et web</p>
+                        <div class="realisations-grid realisations-target explode-reveal">
+                            <div class="realisation-item"><div class="realisation-header"><div class="realisation-icon"><i class="fas fa-mobile-alt"></i></div><div class="realisation-title">Foodly - Mobile</div></div><div class="realisation-desc">Livraison de repas avec géolocalisation.</div><div class="realisation-tech"><span class="tech-badge">React Native</span><span class="tech-badge">Node.js</span></div><a href="#" class="project-link"><i class="fab fa-android"></i> Play Store</a></div>
+                            <div class="realisation-item"><div class="realisation-header"><div class="realisation-icon"><i class="fas fa-globe"></i></div><div class="realisation-title">EcoDrive - Site Web</div></div><div class="realisation-desc">Covoiturage écoresponsable.</div><div class="realisation-tech"><span class="tech-badge">Vue.js</span><span class="tech-badge">Laravel</span></div><a href="#" class="project-link"><i class="fas fa-external-link-alt"></i> Visiter</a></div>
+                            <div class="realisation-item"><div class="realisation-header"><div class="realisation-icon"><i class="fas fa-gamepad"></i></div><div class="realisation-title">PixelQuest - Jeu</div></div><div class="realisation-desc">Aventure rétro avec classements.</div><div class="realisation-tech"><span class="tech-badge">Unity</span><span class="tech-badge">C#</span></div><a href="#" class="project-link"><i class="fab fa-google-play"></i> Télécharger</a></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="boutique" class="scroll-reveal">
+                <div class="container">
+                    <h2 class="section-title">BOUTIQUE DIGITAL</h2>
+                    <p class="section-sub">Logos, affiches, flyers, branding</p>
+                    <div class="shop-grid shop-target explode-reveal">
+                        <div class="product-card"><div class="product-image"><img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=400&h=300&fit=crop" alt="Logo"></div><div class="product-title">Logo Premium</div><div class="product-price">25 000 FCFA</div><button class="btn-whatsapp" onclick="buyProduct('Logo Premium',25000)"><i class="fab fa-whatsapp"></i> Acheter</button></div>
+                        <div class="product-card"><div class="product-image"><img src="https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=400&h=300&fit=crop" alt="Affiche"></div><div class="product-title">Affiche Publicitaire</div><div class="product-price">15 000 FCFA</div><button class="btn-whatsapp" onclick="buyProduct('Affiche',15000)"><i class="fab fa-whatsapp"></i> Acheter</button></div>
+                        <div class="product-card"><div class="product-image"><img src="https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&h=300&fit=crop" alt="Flyers"></div><div class="product-title">Flyers (100 ex)</div><div class="product-price">20 000 FCFA</div><button class="btn-whatsapp" onclick="buyProduct('Flyers',20000)"><i class="fab fa-whatsapp"></i> Acheter</button></div>
+                        <div class="product-card"><div class="product-image"><img src="https://images.unsplash.com/photo-1586717791821-3f44a563fa4c?w=400&h=300&fit=crop" alt="Branding"></div><div class="product-title">Pack Branding</div><div class="product-price">60 000 FCFA</div><button class="btn-whatsapp" onclick="buyProduct('Pack Branding',60000)"><i class="fab fa-whatsapp"></i> Acheter</button></div>
+                    </div>
+                    <div class="shop-access-link" style="text-align:center; margin-top:2rem;"><a href="#boutique" class="btn-primary" style="background: linear-gradient(135deg,#ff00d4,#00d4ff);"><i class="fas fa-store"></i> Explorer la boutique</a></div>
+                </div>
+            </section>
+
+            <section id="contact" class="scroll-reveal">
+                <div class="container">
+                    <h2 class="section-title">CONNECTONS-NOUS</h2>
+                    <p class="section-sub">Prêt à repousser les limites ?</p>
+                    <div class="contact-container contact-target explode-reveal">
+                        <div class="contact-info" style="flex:1"><h3><i class="fas fa-satellite-dish"></i> Communication quantique</h3><p>Réponse sous 24h.</p><div style="margin:1rem 0"><i class="fas fa-envelope"></i> contact@nerva.tech</div><div><i class="fab fa-discord"></i> discord.gg/nerva-lab</div></div>
+                        <form class="contact-form" id="contactForm"><input type="text" id="contactName" placeholder="Identité numérique" required><input type="email" id="contactEmail" placeholder="Email quantique" required><textarea id="contactMessage" placeholder="Votre projet intersidéral..." rows="4"></textarea><button type="submit" class="btn-primary"><i class="fab fa-whatsapp"></i> Envoyer sur WhatsApp</button></form>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <footer class="footer"><div class="social-links"><a href="#"><i class="fab fa-github"></i></a><a href="#"><i class="fab fa-twitter"></i></a><a href="#"><i class="fab fa-linkedin"></i></a><a href="#"><i class="fab fa-instagram"></i></a></div><p>© 2025 NERVA — Énergie créative infinie</p></footer>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        const canvas = document.getElementById('bg-canvas');
+        const scene = new THREE.Scene(); scene.background = new THREE.Color(0x050510);
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 1.2, 9);
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        const particlesGeo = new THREE.BufferGeometry();
+        const count = 2200;
+        const pos = new Float32Array(count * 3);
+        for(let i=0;i<count*3;i+=3){ pos[i]=(Math.random()-0.5)*38; pos[i+1]=(Math.random()-0.5)*30; pos[i+2]=(Math.random()-0.5)*28-12; }
+        particlesGeo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+        const particlesMat = new THREE.PointsMaterial({ color: 0x00d4ff, size: 0.055, transparent: true, blending: THREE.AdditiveBlending });
+        const particlesSys = new THREE.Points(particlesGeo, particlesMat);
+        scene.add(particlesSys);
+        const torus1 = new THREE.Mesh(new THREE.TorusGeometry(1.9, 0.045, 128, 300), new THREE.MeshStandardMaterial({ color: 0xff44cc, emissive: 0xff44cc, emissiveIntensity: 0.5 }));
+        const torus2 = new THREE.Mesh(new THREE.TorusGeometry(2.3, 0.035, 128, 300), new THREE.MeshStandardMaterial({ color: 0x44aaff, emissive: 0x44aaff, emissiveIntensity: 0.4 }));
+        scene.add(torus1, torus2);
+        const starsGeo = new THREE.BufferGeometry(); const starsPos = new Float32Array(1800*3);
+        for(let i=0;i<1800*3;i+=3){ starsPos[i]=(Math.random()-0.5)*210; starsPos[i+1]=(Math.random()-0.5)*110; starsPos[i+2]=(Math.random()-0.5)*90-40; }
+        starsGeo.setAttribute('position', new THREE.BufferAttribute(starsPos,3));
+        const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.06, transparent: true, opacity: 0.7 });
+        const starsField = new THREE.Points(starsGeo, starsMat);
+        scene.add(starsField);
+        const ambient = new THREE.AmbientLight(0x111133); const plight = new THREE.PointLight(0x44aaff, 0.8); plight.position.set(2,3,5);
+        scene.add(ambient, plight);
+        let time=0;
+        function animate(){ requestAnimationFrame(animate); time+=0.01; torus1.rotation.x=time*0.5; torus1.rotation.y=time*0.8; torus2.rotation.x=time*0.4; torus2.rotation.z=time*0.6; particlesSys.rotation.y=time*0.04; starsField.rotation.x=time*0.02; camera.position.x+=(Math.sin(time*0.3)*0.04-camera.position.x)*0.03; camera.position.y+=(Math.sin(time*0.5)*0.05-camera.position.y)*0.03; renderer.render(scene,camera); }
+        animate();
+        
+        function updateThreeJsTheme() {
+            const light = document.body.classList.contains('light-mode');
+            const gradient = document.body.classList.contains('gradient-mode');
+            if(light || (gradient && document.body.classList.contains('light-mode'))) {
+                scene.background.setHex(0xf2f4fc);
+                particlesMat.color.setHex(0x7a8cff);
+                starsMat.color.setHex(0x99aaff);
+                starsMat.opacity=0.35;
+                plight.intensity=0.5;
+            } else if(gradient) {
+                scene.background.setHex(0x1a1a2e);
+                particlesMat.color.setHex(0x00d4ff);
+                starsMat.color.setHex(0xffffff);
+                starsMat.opacity=0.6;
+                plight.intensity=0.7;
+            } else {
+                scene.background.setHex(0x050510);
+                particlesMat.color.setHex(0x00d4ff);
+                starsMat.color.setHex(0xffffff);
+                starsMat.opacity=0.7;
+                plight.intensity=0.8;
+            }
+        }
+        
+        new MutationObserver(()=>{ updateThreeJsTheme(); }).observe(document.body,{attributes:true});
+        window.addEventListener('resize',()=>{ camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth,window.innerHeight); });
+    </script>
+
+    <script>
+        function createHeroParticles(){ const c=document.getElementById('heroParticles'); if(!c) return; for(let i=0;i<85;i++){ let p=document.createElement('div'); p.className='hero-particle'; p.style.left=Math.random()*100+'%'; p.style.animationDelay=Math.random()*9+'s'; p.style.animationDuration=5+Math.random()*7+'s'; p.style.width=(Math.random()*8+3)+'px'; p.style.height=p.style.width; c.appendChild(p); } }
+        createHeroParticles();
+        
+        // Système de thème amélioré avec 3 modes
+        function setTheme(theme) {
+            document.body.classList.remove('light-mode', 'gradient-mode');
+            if(theme === 'light') {
+                document.body.classList.add('light-mode');
+            } else if(theme === 'gradient') {
+                document.body.classList.add('gradient-mode');
+            }
+            // dark est la classe par défaut (rien à ajouter)
+            
+            localStorage.setItem('nerva-theme', theme);
+            updateThemeButtons(theme);
+        }
+        
+        function updateThemeButtons(activeTheme) {
+            const btns = document.querySelectorAll('.theme-btn');
+            btns.forEach(btn => {
+                const theme = btn.getAttribute('data-theme');
+                if(theme === activeTheme) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+        
+        // Charger le thème sauvegardé
+        const savedTheme = localStorage.getItem('nerva-theme') || 'dark';
+        setTheme(savedTheme);
+        
+        // Ajouter les écouteurs aux boutons
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const theme = btn.getAttribute('data-theme');
+                setTheme(theme);
+            });
+        });
+        
+        // Contact WhatsApp
+        document.getElementById('contactForm').addEventListener('submit',function(e){ e.preventDefault(); const name=document.getElementById('contactName').value, email=document.getElementById('contactEmail').value, msg=document.getElementById('contactMessage').value; const waMsg=`Bonjour Nerva !%0A%0A👤 Nom: ${encodeURIComponent(name)}%0A📧 Email: ${encodeURIComponent(email)}%0A💬 Message: ${encodeURIComponent(msg)}`; window.open(`https://wa.me/237600000000?text=${waMsg}`,'_blank'); this.reset(); });
+        window.buyProduct=function(n,p){ window.open(`https://wa.me/237600000000?text=Bonjour%20Nerva%20!%0A%0A🛍️%20Achat%20:${encodeURIComponent(n)}%0A💰%20Prix%20:${p}%20FCFA`,'_blank'); };
+        
+        // Menu mobile
+        const menuToggle=document.getElementById('mobile-menu'), navLinks=document.getElementById('nav-links'); menuToggle.addEventListener('click',()=>{ menuToggle.classList.toggle('active'); navLinks.classList.toggle('active'); });
+        document.querySelectorAll('.nav-links a').forEach(l=>l.addEventListener('click',()=>{ menuToggle.classList.remove('active'); navLinks.classList.remove('active'); }));
+        
+        // Smooth scroll
+        document.querySelectorAll('.nav-links a, .btn-primary, .btn-outline').forEach(anchor=>{ anchor.addEventListener('click',function(e){ const href=this.getAttribute('href'); if(href&&href.startsWith('#')&&href!=='#'){ e.preventDefault(); const target=document.querySelector(href); if(target) target.scrollIntoView({behavior:'smooth',block:'start'}); if(navLinks.classList.contains('active')){ navLinks.classList.remove('active'); menuToggle.classList.remove('active'); } } }); });
+        
+        // SCROLL REVEAL
+        const revealElements = document.querySelectorAll('.scroll-reveal, .explode-reveal');
+        const observerOptions = { threshold: 0.2, rootMargin: "0px 0px -50px 0px" };
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if(entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                    revealObserver.unobserve(entry.target);
+                    if(entry.target.classList.contains('explode-reveal')) {
+                        const children = entry.target.children;
+                        for(let i = 0; i < children.length; i++) {
+                            if(children[i].style) {
+                                children[i].style.animation = 'none';
+                                setTimeout(() => { children[i].style.animation = ''; }, 10);
+                            }
+                        }
+                    }
+                }
+            });
+        }, observerOptions);
+        revealElements.forEach(el => revealObserver.observe(el));
+        
+        // Flotting orb
+        const orb = document.getElementById('floatingOrb');
+        document.addEventListener('mousemove', (e) => { orb.style.transform = `translate(${e.clientX - 100}px, ${e.clientY - 100}px)`; });
+        
+        // Animation parallaxe
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const hero = document.querySelector('.hero');
+            if(hero) hero.style.backgroundPositionY = `${scrolled * 0.2}px`;
+        });
+        
+        // Effet 3D sur les cartes
+        const cards = document.querySelectorAll('.skill-card, .team-member, .project-card, .product-card');
+        cards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = (y - centerY) / 20;
+                const rotateY = (centerX - x) / 20;
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px)`;
+            });
+            card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+        });
+        
+        // Curseur lumineux mobile
+        const mobileGlow = document.getElementById('mobileGlow');
+        let glowTimeout, isScrolling = false;
+        function updateGlowPosition() {
+            if (!mobileGlow) return;
+            mobileGlow.style.left = window.innerWidth / 2 + 'px';
+            mobileGlow.style.top = window.innerHeight / 2 + 'px';
+        }
+        function handleScrollStart() {
+            if (window.innerWidth <= 768) {
+                if (!isScrolling) { isScrolling = true; mobileGlow.classList.add('active'); updateGlowPosition(); }
+                if (glowTimeout) clearTimeout(glowTimeout);
+                glowTimeout = setTimeout(() => { mobileGlow.classList.remove('active'); isScrolling = false; }, 200);
+            }
+        }
+        window.addEventListener('scroll', () => { handleScrollStart(); if (mobileGlow && mobileGlow.classList.contains('active')) updateGlowPosition(); });
+        document.addEventListener('touchmove', (e) => {
+            if (window.innerWidth <= 768 && mobileGlow && mobileGlow.classList.contains('active')) {
+                const touch = e.touches[0];
+                if (touch) { mobileGlow.style.left = touch.clientX + 'px'; mobileGlow.style.top = touch.clientY + 'px'; }
+                else updateGlowPosition();
+            }
+        });
+        document.addEventListener('touchstart', () => {
+            if (window.innerWidth <= 768) {
+                if (!mobileGlow.classList.contains('active')) { mobileGlow.classList.add('active'); updateGlowPosition(); }
+                if (glowTimeout) clearTimeout(glowTimeout);
+                glowTimeout = setTimeout(() => { if (!isScrolling) mobileGlow.classList.remove('active'); }, 300);
+            }
+        });
+        document.addEventListener('touchend', () => { if (glowTimeout) clearTimeout(glowTimeout); glowTimeout = setTimeout(() => { mobileGlow.classList.remove('active'); isScrolling = false; }, 150); });
+        updateGlowPosition();
+        
+        // Animation supplémentaire : compteur d'énergie dynamique sur le footer (effet live)
+        const footer = document.querySelector('.footer p');
+        if(footer) {
+            let energy = 0;
+            setInterval(() => {
+                energy = (energy + 1) % 101;
+                footer.setAttribute('data-energy', `⚡ ${energy}%`);
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
